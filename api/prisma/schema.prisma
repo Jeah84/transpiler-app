@@ -1,0 +1,59 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  passwordHash      String
+  emailVerified     Boolean   @default(false)
+  emailVerifiedAt   DateTime?
+  verifyToken       String?
+  verifyTokenExpiry DateTime?
+  plan              Plan      @default(FREE)
+  dailyCount        Int       @default(0)
+  dailyDate         String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  translations      Translation[]
+  subscription      Subscription?
+
+  @@index([email])
+}
+
+model Translation {
+  id             String   @id @default(cuid())
+  userId         String
+  sourceLanguage String
+  targetLanguage String
+  sourceCode     String
+  translatedCode String
+  tokensUsed     Int?
+  createdAt      DateTime @default(now())
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Subscription {
+  id                   String   @id @default(cuid())
+  userId               String   @unique
+  plan                 Plan     @default(FREE)
+  active               Boolean  @default(true)
+  stripeCustomerId     String?
+  stripeSubscriptionId String?
+  currentPeriodEnd     DateTime?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+enum Plan {
+  FREE
+  PRO
+}
