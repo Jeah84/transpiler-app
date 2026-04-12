@@ -42,7 +42,7 @@ Rules:
     throw new Error(`Together.ai API error: ${response.status} ${body}`);
   }
 
-  const data = await response.json();
+  const data: any = await response.json();
   const translatedCode = data.choices?.[0]?.message?.content?.trim() ?? '';
   const tokensUsed = data.usage?.total_tokens ?? 0;
 
