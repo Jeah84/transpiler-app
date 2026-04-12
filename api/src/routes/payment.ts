@@ -5,7 +5,11 @@ import { requireAuth } from '../middleware/auth';
 import { AuthRequest } from '../types/express';
 import { env } from '../config/env';
 
-const stripe = new Stripe(env.stripeSecretKey);
+let _stripe: Stripe | null = null;
+function getStripe() {
+  if (!_stripe) _stripe = new Stripe(env.stripeSecretKey);
+  return _stripe;
+}
 const router = Router();
 
 // POST /api/payment/create-checkout-session
@@ -29,11 +33,11 @@ router.post('/create-checkout-session', requireAuth, async (req: AuthRequest, re
     // Get or create Stripe customer
     let customerId = user.subscription?.stripeCustomerId;
     if (!customerId) {
-      const customer = await stripe.customers.create({ email: user.email });
+      const customer = await getStripe().customers.create({ email: user.email });
       customerId = customer.id;
     }
 
-    const session = await stripe.checkout.sessions.create({
+    const session = await getStripe().checkout.sessions.create({
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
@@ -68,7 +72,7 @@ router.post('/portal', requireAuth, async (req: AuthRequest, res: Response) => {
       return;
     }
 
-    const session = await stripe.billingPortal.sessions.create({
+    const session = await getStripe().billingPortal.sessions.create({
       customer: user.subscription.stripeCustomerId,
       return_url: `${env.frontendUrl}/settings`,
     });
@@ -86,7 +90,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
 
   let event: Stripe.Event;
   try {
-    event = stripe.webhooks.constructEvent(req.body, sig, env.stripeWebhookSecret);
+    event = getStripe().webhooks.constructEvent(req.body, sig, env.stripeWebhookSecret);
   } catch (err) {
     console.error('Webhook signature verification failed:', err);
     res.status(400).json({ error: 'Invalid signature' });
@@ -101,7 +105,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
         if (!userId) break;
 
         const subscriptionId = session.subscription as string;
-        const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+        const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
 
         await prisma.$transaction([
           prisma.subscription.upsert({
