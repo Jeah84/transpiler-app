@@ -21,6 +21,10 @@ app.use('/api/payment/webhook', express.raw({ type: 'application/json' }));
 app.use(express.json({ limit: '1mb' }));
 app.use(compression());
 
+app.get('/healthz', (_req, res) => {
+  res.status(200).send('ok');
+});
+
 // Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/translate', translateRoutes);
