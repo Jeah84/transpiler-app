@@ -86,7 +86,7 @@ export function PricingPage() {
               Recommended
             </div>
             <h3 className="text-xl font-semibold mb-2">Pro</h3>
-            <p className="text-4xl font-bold mb-1">$9<span className="text-lg text-gray-500">/mo</span></p>
+            <p className="text-4xl font-bold mb-1">$20<span className="text-lg text-gray-500">/mo</span></p>
             <p className="text-gray-500 mb-6">Billed monthly</p>
             <ul className="space-y-3 text-gray-300 mb-8">
               <li className="flex items-center gap-2">
