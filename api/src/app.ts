@@ -9,8 +9,20 @@ import paymentRoutes from './routes/payment';
 const app = express();
 
 // CORS
+const allowedOrigins = [
+  env.frontendUrl.replace(/\/+$/, ''),
+  'https://transpiler.us',
+  'https://www.transpiler.us',
+];
+
 app.use(cors({
-  origin: env.frontendUrl,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS blocked: ${origin}`));
+    }
+  },
   credentials: true,
 }));
 
