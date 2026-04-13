@@ -9,6 +9,7 @@ export function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const { register } = useAuth();
   const navigate = useNavigate();
 
@@ -91,10 +92,26 @@ export function RegisterPage() {
             />
           </div>
 
+          <div className="flex items-start gap-3">
+            <input
+              type="checkbox"
+              id="terms"
+              checked={agreedToTerms}
+              onChange={(e) => setAgreedToTerms(e.target.checked)}
+              className="mt-1 accent-blue-600"
+            />
+            <label htmlFor="terms" className="text-sm text-gray-400">
+              I agree to the{' '}
+              <a href="/terms" target="_blank" className="text-blue-400 hover:underline">Terms of Service</a>
+              {' '}and{' '}
+              <a href="/privacy" target="_blank" className="text-blue-400 hover:underline">Privacy Policy</a>
+            </label>
+          </div>
+
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium py-2 rounded-lg transition-colors"
+            disabled={loading || !agreedToTerms}
+            className={`w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 rounded-lg transition-colors ${loading || !agreedToTerms ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
