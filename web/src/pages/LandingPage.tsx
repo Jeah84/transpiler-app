@@ -1,123 +1,337 @@
 import { Link } from 'react-router-dom';
-import { Logo } from '../components/Logo';
-import { useAuth } from '../context/AuthContext';
+
+// VS Code-style logo SVG component
+function TranspilerLogo({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 40 40"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+    >
+      {/* Editor window background */}
+      <rect width="40" height="40" rx="6" fill="#1E1E2E" />
+
+      {/* Title bar */}
+      <rect x="0" y="0" width="40" height="8" rx="6" fill="#2D2D3F" />
+      <rect x="0" y="4" width="40" height="4" fill="#2D2D3F" />
+
+      {/* Window control dots */}
+      <circle cx="6" cy="4" r="1.5" fill="#FF5F57" />
+      <circle cx="11" cy="4" r="1.5" fill="#FFBD2E" />
+      <circle cx="16" cy="4" r="1.5" fill="#28CA41" />
+
+      {/* Tab */}
+      <rect x="20" y="1" width="14" height="6" rx="2" fill="#1E1E2E" />
+      <text x="22" y="6" fill="#9CDCFE" fontSize="3.5" fontFamily="monospace">ts</text>
+
+      {/* Code lines */}
+      {/* Line 1: const keyword + variable */}
+      <rect x="3" y="12" width="5" height="1.8" rx="0.5" fill="#569CD6" />
+      <rect x="9" y="12" width="7" height="1.8" rx="0.5" fill="#9CDCFE" />
+      <rect x="17" y="12" width="2" height="1.8" rx="0.5" fill="#D4D4D4" />
+      <rect x="20" y="12" width="8" height="1.8" rx="0.5" fill="#CE9178" />
+
+      {/* Line 2: indented - function call */}
+      <rect x="5" y="16" width="8" height="1.8" rx="0.5" fill="#DCDCAA" />
+      <rect x="14" y="16" width="2" height="1.8" rx="0.5" fill="#D4D4D4" />
+      <rect x="17" y="16" width="6" height="1.8" rx="0.5" fill="#9CDCFE" />
+
+      {/* Line 3: arrow / operator */}
+      <rect x="5" y="20" width="3" height="1.8" rx="0.5" fill="#569CD6" />
+      <rect x="9" y="20" width="10" height="1.8" rx="0.5" fill="#4EC9B0" />
+      <rect x="20" y="20" width="5" height="1.8" rx="0.5" fill="#D4D4D4" />
+
+      {/* Line 4: return */}
+      <rect x="3" y="24" width="6" height="1.8" rx="0.5" fill="#C586C0" />
+      <rect x="10" y="24" width="9" height="1.8" rx="0.5" fill="#9CDCFE" />
+
+      {/* Status bar */}
+      <rect x="0" y="34" width="40" height="6" rx="0" fill="#007ACC" />
+      <rect x="0" y="34" width="40" height="6" fill="#007ACC" />
+      <rect x="0" y="38" width="40" height="2" rx="0" fill="#007ACC" />
+      <text x="3" y="38.5" fill="white" fontSize="3" fontFamily="monospace">TypeScript</text>
+    </svg>
+  );
+}
 
 export function LandingPage() {
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {/* Nav */}
-      <nav className="border-b border-gray-800">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-          <Logo />
-          <div className="flex items-center gap-4">
-            {user ? (
-              <Link to="/dashboard" className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                Dashboard
-              </Link>
-            ) : (
-              <>
-                <Link to="/login" className="text-gray-300 hover:text-white text-sm transition-colors">
-                  Log in
-                </Link>
-                <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors">
-                  Get Started
-                </Link>
-              </>
-            )}
-          </div>
+      {/* Navigation */}
+      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+        <div className="flex items-center gap-3">
+          <TranspilerLogo size={36} />
+          <span className="text-xl font-bold text-white tracking-tight">Transpiler</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <Link
+            to="/login"
+            className="text-gray-400 hover:text-white transition-colors text-sm font-medium"
+          >
+            Log in
+          </Link>
+          <Link
+            to="/register"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            Get Started
+          </Link>
         </div>
       </nav>
 
-      {/* Hero */}
-      <section className="max-w-4xl mx-auto px-4 py-24 text-center">
-        <h1 className="text-5xl md:text-6xl font-bold mb-6 bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">
-          Translate Code Between Languages Instantly
+      {/* Hero Section */}
+      <section className="text-center px-6 pt-20 pb-16 max-w-4xl mx-auto">
+        <div className="inline-flex items-center gap-2 bg-blue-950 border border-blue-800 text-blue-300 text-xs font-medium px-3 py-1 rounded-full mb-6">
+          <span className="w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse" />
+          Powered by Llama 3.3 70B · 27 Languages
+        </div>
+        <h1 className="text-5xl font-extrabold tracking-tight text-white leading-tight mb-4">
+          Translate Code Between<br />
+          <span className="text-blue-400">Languages Instantly</span>
         </h1>
-        <p className="text-xl text-gray-400 mb-8 max-w-2xl mx-auto">
-          Powered by AI. Convert code between 27+ programming languages with a single click.
-          Preserve logic, structure, and idioms.
+        <p className="text-lg text-gray-400 max-w-2xl mx-auto mb-8">
+          Paste code in any language — get clean, accurate output in another. From Python to Rust,
+          JavaScript to Go, TypeScript to Java. No setup, no guesswork.
         </p>
-        <div className="flex gap-4 justify-center">
-          <Link to="/register" className="bg-indigo-600 hover:bg-indigo-700 px-8 py-3 rounded-lg font-medium text-lg transition-colors">
+        <div className="flex flex-col sm:flex-row gap-3 justify-center">
+          <Link
+            to="/register"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-6 py-3 rounded-lg font-semibold transition-colors text-base"
+          >
             Start Translating Free
           </Link>
-          <Link to="/pricing" className="border border-gray-600 hover:border-gray-500 px-8 py-3 rounded-lg font-medium text-lg transition-colors">
+          <Link
+            to="/pricing"
+            className="bg-gray-800 hover:bg-gray-700 text-gray-200 px-6 py-3 rounded-lg font-semibold transition-colors text-base border border-gray-700"
+          >
             View Pricing
           </Link>
         </div>
       </section>
 
-      {/* Features */}
-      <section className="max-w-6xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Why Transpiler?</h2>
-        <div className="grid md:grid-cols-3 gap-8">
+      {/* How to Use */}
+      <section className="px-6 py-16 max-w-5xl mx-auto">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl font-bold text-white mb-3">How to Use Transpiler</h2>
+          <p className="text-gray-400 text-base max-w-xl mx-auto">
+            Get your code translated in three simple steps — no IDE, no plugins, no friction.
+          </p>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {[
             {
-              title: '27+ Languages',
-              desc: 'From Python to Rust, JavaScript to Go — we support all the languages you need.',
-              icon: '🌐',
+              step: '01',
+              title: 'Paste Your Code',
+              description:
+                'Open the dashboard, select your source language, and paste the code you want to translate. Supports full files or individual functions.',
+              icon: (
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+              ),
             },
             {
-              title: 'AI-Powered Accuracy',
-              desc: 'Using Llama 3.3 70B for intelligent, context-aware code translation.',
-              icon: '🤖',
+              step: '02',
+              title: 'Choose Your Target Language',
+              description:
+                'Pick the destination language from 27 supported options — Python, TypeScript, Rust, Go, Java, C#, Swift, Kotlin, and more.',
+              icon: (
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
+                </svg>
+              ),
             },
             {
-              title: 'Instant Results',
-              desc: 'Get your translated code in seconds, ready to use in your project.',
-              icon: '⚡',
+              step: '03',
+              title: 'Copy and Use',
+              description:
+                'Hit Translate and get clean, idiomatic code in seconds. Copy the result directly into your project. Free plan includes 10 translations/month.',
+              icon: (
+                <svg className="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                </svg>
+              ),
             },
-          ].map((f) => (
-            <div key={f.title} className="bg-gray-900 border border-gray-800 rounded-xl p-6">
-              <div className="text-3xl mb-4">{f.icon}</div>
-              <h3 className="text-xl font-semibold mb-2">{f.title}</h3>
-              <p className="text-gray-400">{f.desc}</p>
+          ].map(({ step, title, description, icon }) => (
+            <div
+              key={step}
+              className="bg-gray-900 border border-gray-800 rounded-xl p-6 relative overflow-hidden"
+            >
+              <div className="absolute top-4 right-4 text-4xl font-black text-gray-800 select-none">
+                {step}
+              </div>
+              <div className="mb-4">{icon}</div>
+              <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
             </div>
           ))}
         </div>
       </section>
 
-      {/* Pricing Preview */}
-      <section className="max-w-4xl mx-auto px-4 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">Simple Pricing</h2>
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="bg-gray-900 border border-gray-800 rounded-xl p-8">
-            <h3 className="text-xl font-semibold mb-2">Free</h3>
-            <p className="text-3xl font-bold mb-4">$0<span className="text-lg text-gray-500">/mo</span></p>
-            <ul className="space-y-2 text-gray-400 mb-6">
-              <li>✓ 5 translations per day</li>
-              <li>✓ 27+ languages</li>
-              <li>✓ Translation history</li>
-            </ul>
-            <Link to="/register" className="block text-center border border-gray-600 hover:border-gray-500 px-6 py-2 rounded-lg transition-colors">
-              Get Started
-            </Link>
+      {/* Why Transpiler */}
+      <section className="px-6 py-16 bg-gray-900/50">
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white mb-3">Why Transpiler?</h2>
+            <p className="text-gray-400 text-base max-w-xl mx-auto">
+              Built for developers who work across stacks and need accurate translations fast.
+            </p>
           </div>
-          <div className="bg-gray-900 border-2 border-indigo-500 rounded-xl p-8 relative">
-            <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-xs font-bold px-3 py-1 rounded-full">
-              POPULAR
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Pro</h3>
-            <p className="text-3xl font-bold mb-4">$9<span className="text-lg text-gray-500">/mo</span></p>
-            <ul className="space-y-2 text-gray-400 mb-6">
-              <li>✓ 100 translations per day</li>
-              <li>✓ 27+ languages</li>
-              <li>✓ Translation history</li>
-              <li>✓ Priority support</li>
-            </ul>
-            <Link to="/register" className="block text-center bg-indigo-600 hover:bg-indigo-700 px-6 py-2 rounded-lg font-medium transition-colors">
-              Start Pro Trial
-            </Link>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {[
+              {
+                title: '27+ Languages',
+                description:
+                  'From Python and JavaScript to Rust, Go, Haskell, and beyond. We cover the full spectrum of modern and systems languages.',
+                icon: '🌐',
+              },
+              {
+                title: 'AI-Powered Accuracy',
+                description:
+                  'Llama 3.3 70B understands context, idioms, and patterns — producing code that feels native, not just syntactically converted.',
+                icon: '🤖',
+              },
+              {
+                title: 'Instant Results',
+                description:
+                  'No waiting for compilation or processing queues. Translations complete in seconds so you can stay in flow.',
+                icon: '⚡',
+              },
+            ].map(({ title, description, icon }) => (
+              <div
+                key={title}
+                className="bg-gray-900 border border-gray-800 rounded-xl p-6"
+              >
+                <div className="text-3xl mb-4">{icon}</div>
+                <h3 className="text-white font-semibold text-lg mb-2">{title}</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">{description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
+      {/* Supported Languages Banner */}
+      <section className="px-6 py-12 max-w-5xl mx-auto">
+        <p className="text-center text-gray-500 text-xs uppercase tracking-widest mb-6 font-medium">
+          Supported Languages
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {[
+            'Python', 'JavaScript', 'TypeScript', 'Rust', 'Go', 'Java', 'C#', 'C++',
+            'C', 'Swift', 'Kotlin', 'Ruby', 'PHP', 'Scala', 'Haskell', 'Elixir',
+            'Clojure', 'Lua', 'Perl', 'R', 'MATLAB', 'Julia', 'Dart', 'Zig',
+            'Nim', 'OCaml', 'F#',
+          ].map((lang) => (
+            <span
+              key={lang}
+              className="bg-gray-900 border border-gray-800 text-gray-400 text-xs px-3 py-1 rounded-full font-mono"
+            >
+              {lang}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA Banner */}
+      <section className="px-6 py-16 max-w-3xl mx-auto text-center">
+        <div className="bg-gradient-to-r from-blue-950 to-gray-900 border border-blue-800 rounded-2xl p-10">
+          <h2 className="text-3xl font-bold text-white mb-3">Ready to translate your first file?</h2>
+          <p className="text-gray-400 mb-6 text-base">
+            Free account. No credit card required. 10 translations included every month.
+          </p>
+          <Link
+            to="/register"
+            className="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-lg font-semibold transition-colors text-base inline-block"
+          >
+            Create Free Account
+          </Link>
+        </div>
+      </section>
+
+      {/* Legal / Payment Terms */}
+      <section className="px-6 py-10 max-w-3xl mx-auto">
+        <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 text-sm text-gray-500 leading-relaxed">
+          <h3 className="text-gray-300 font-semibold text-base mb-3">Payment & Billing Terms</h3>
+          <p className="mb-3">
+            Transpiler Pro is a monthly subscription at <strong className="text-gray-300">$20 / month</strong>, billed
+            automatically each month on the date you subscribe. Payments are processed securely by{' '}
+            <a
+              href="https://stripe.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline"
+            >
+              Stripe
+            </a>
+            , a PCI-DSS Level 1 certified payment processor. Transpiler does not store your card
+            details.
+          </p>
+          <p className="mb-3">
+            You may cancel your subscription at any time from your account settings. Cancellation
+            takes effect at the end of the current billing period — you will retain Pro access until
+            that date and will not be charged again after cancellation.
+          </p>
+          <p className="mb-3">
+            Refunds are available within <strong className="text-gray-300">7 days</strong> of initial
+            purchase if you have not used more than 5 Pro translations. To request a refund, contact{' '}
+            <a href="mailto:support@transpiler.us" className="text-blue-400 hover:underline">
+              support@transpiler.us
+            </a>
+            .
+          </p>
+          <p>
+            By subscribing, you agree to our{' '}
+            <Link to="/terms" className="text-blue-400 hover:underline">
+              Terms of Service
+            </Link>{' '}
+            and{' '}
+            <Link to="/privacy" className="text-blue-400 hover:underline">
+              Privacy Policy
+            </Link>
+            . Stripe's{' '}
+            <a
+              href="https://stripe.com/legal/ssa"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline"
+            >
+              Services Agreement
+            </a>{' '}
+            and{' '}
+            <a
+              href="https://stripe.com/privacy"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-400 hover:underline"
+            >
+              Privacy Policy
+            </a>{' '}
+            also apply to payment processing.
+          </p>
+        </div>
+      </section>
+
       {/* Footer */}
-      <footer className="border-t border-gray-800 mt-16">
-        <div className="max-w-6xl mx-auto px-4 py-8 text-center text-gray-500 text-sm">
-          © {new Date().getFullYear()} Transpiler. All rights reserved.
+      <footer className="border-t border-gray-800 mt-8 px-6 py-10">
+        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <TranspilerLogo size={24} />
+            <span className="text-gray-500 text-sm font-medium">Transpiler</span>
+          </div>
+          <div className="flex items-center gap-6 text-sm text-gray-500">
+            <Link to="/pricing" className="hover:text-gray-300 transition-colors">Pricing</Link>
+            <Link to="/terms" className="hover:text-gray-300 transition-colors">Terms of Service</Link>
+            <Link to="/privacy" className="hover:text-gray-300 transition-colors">Privacy Policy</Link>
+            <a href="mailto:support@transpiler.us" className="hover:text-gray-300 transition-colors">
+              Contact
+            </a>
+          </div>
+          <p className="text-gray-600 text-xs">
+            © {new Date().getFullYear()} Transpiler. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>
