@@ -54,6 +54,7 @@ router.post('/create-checkout-session', requireAuth, async (req: AuthRequest, re
           quantity: 1,
         },
       ],
+      allow_promotion_codes: true,
       success_url: `${env.frontendUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.frontendUrl}/pricing`,
       metadata: { userId: user.id },
