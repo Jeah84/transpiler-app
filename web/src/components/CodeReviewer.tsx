@@ -15,11 +15,8 @@ const LANGUAGES = [
   'Swift',
 ];
 
-const SYSTEM_PROMPT =
-  'You are an expert code reviewer. Review the code for bugs, security issues, performance problems, and style. Format your response with clear sections: Bugs, Security, Performance, Style. Be concise and actionable.';
 
-const API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-4-20250514';
+import { api } from '../lib/api';
 
 const CodeReviewer: React.FC = () => {
   const [language, setLanguage] = useState('JavaScript');
@@ -33,28 +30,13 @@ const CodeReviewer: React.FC = () => {
     setError(null);
     setReview('');
     try {
-      const res = await fetch(API_URL, {
+      const data = await api<{ review: string }>('/tools/review', {
         method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: MODEL,
-          max_tokens: 1000,
-          system: SYSTEM_PROMPT,
-          messages: [
-            {
-              role: 'user',
-              content: `Language: ${language}\n\nCode:\n${code}`,
-            },
-          ],
-        }),
+        body: { code, language },
       });
-      if (!res.ok) throw new Error('API error');
-      const data = await res.json();
-      setReview(data.content?.[0]?.text || 'No response.');
+      setReview(data.review);
     } catch (e: any) {
-      setError(e.message || 'Unknown error');
+      setError(e.message || 'Review failed');
     } finally {
       setLoading(false);
     }
