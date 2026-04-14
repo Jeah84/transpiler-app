@@ -19,6 +19,12 @@ export function DashboardPage() {
   const [error, setError] = useState('');
   const [dailyCount, setDailyCount] = useState(0);
   const [dailyLimit, setDailyLimit] = useState(5);
+
+  useEffect(() => {
+    if (user?.plan === 'PRO') {
+      setDailyLimit(999);
+    }
+  }, [user]);
   const [history, setHistory] = useState<Translation[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
@@ -87,7 +93,7 @@ export function DashboardPage() {
           </Link>
           <div className="flex items-center gap-4">
             <span className="text-sm text-gray-400">
-              {dailyCount}/{dailyLimit} today
+              {user?.plan === 'PRO' ? `${dailyCount} today (unlimited)` : `${dailyCount}/${dailyLimit} today`}
             </span>
             {user?.plan === 'FREE' && (
               <Link to="/pricing" className="text-xs bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded">

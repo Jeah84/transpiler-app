@@ -1,4 +1,6 @@
 {
     "editor.inlineSuggest.edits.allowCodeShifting": "never",
-    "editor.inlineSuggest.edits.showLongDistanceHint": false
+    "editor.inlineSuggest.edits.showLongDistanceHint": false,
+    "workbench.editor.tabActionCloseVisibility": false,
+    "window.density.editorTabHeight": "compact"
 }
