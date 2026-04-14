@@ -7,7 +7,14 @@ import { env } from '../config/env';
 
 let _stripe: Stripe | null = null;
 function getStripe() {
-  if (!_stripe) _stripe = new Stripe(env.stripeSecretKey);
+  if (!_stripe) {
+    console.log('STRIPE DEBUG:', {
+      hasKey: !!env.stripeSecretKey,
+      keyLength: env.stripeSecretKey?.length,
+      keyPrefix: env.stripeSecretKey?.substring(0, 7),
+    });
+    _stripe = new Stripe(env.stripeSecretKey);
+  }
   return _stripe;
 }
 const router = Router();
