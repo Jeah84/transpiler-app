@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import yaml from 'js-yaml';
+import { load, dump } from 'js-yaml';
 
 const INDENTS = [
   { label: '2 Spaces', value: 2 },
@@ -23,14 +23,14 @@ function minifyJson(input: string) {
 
 
 function formatYaml(input: string, indent: number | string) {
-  const obj = yaml.load(input);
+  const obj = load(input);
   const resolvedIndent = indent === "\t" ? 2 : Number(indent);
-  return yaml.dump(obj, { indent: resolvedIndent });
+  return dump(obj, { indent: resolvedIndent });
 }
 
 function minifyYaml(input: string) {
-  const obj = yaml.load(input);
-  return yaml.dump(obj, { indent: 2, flowLevel: -1 });
+  const obj = load(input);
+  return dump(obj, { indent: 2, flowLevel: -1 });
 }
 
 export const JsonYamlFormatter: React.FC = () => {
@@ -50,9 +50,9 @@ export const JsonYamlFormatter: React.FC = () => {
         // Try JSON to YAML first, else YAML to JSON
         try {
           const obj = JSON.parse(input);
-          result = yaml.dump(obj, { indent: resolvedIndent });
+          result = dump(obj, { indent: resolvedIndent });
         } catch {
-          const obj = yaml.load(input);
+          const obj = load(input);
           result = JSON.stringify(obj, null, resolvedIndent);
         }
       }
@@ -71,9 +71,9 @@ export const JsonYamlFormatter: React.FC = () => {
       else if (mode === 'convert') {
         try {
           const obj = JSON.parse(input);
-          result = yaml.dump(obj, { indent: 2, flowLevel: -1 });
+          result = dump(obj, { indent: 2, flowLevel: -1 });
         } catch {
-          const obj = yaml.load(input);
+          const obj = load(input);
           result = JSON.stringify(obj);
         }
       }
