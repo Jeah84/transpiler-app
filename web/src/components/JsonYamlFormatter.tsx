@@ -11,17 +11,21 @@ type Mode = 'json' | 'yaml' | 'convert';
 
 type Status = { type: 'success' | 'error' | 'info'; message: string };
 
+
 function formatJson(input: string, indent: number | string) {
-  return JSON.stringify(JSON.parse(input), null, indent);
+  const resolvedIndent = indent === "\t" ? 2 : Number(indent);
+  return JSON.stringify(JSON.parse(input), null, resolvedIndent);
 }
 
 function minifyJson(input: string) {
   return JSON.stringify(JSON.parse(input));
 }
 
+
 function formatYaml(input: string, indent: number | string) {
   const obj = yaml.load(input);
-  return yaml.dump(obj, { indent: indent === '\\t' ? 2 : indent });
+  const resolvedIndent = indent === "\t" ? 2 : Number(indent);
+  return yaml.dump(obj, { indent: resolvedIndent });
 }
 
 function minifyYaml(input: string) {
@@ -39,16 +43,17 @@ export const JsonYamlFormatter: React.FC = () => {
   const handleFormat = () => {
     try {
       let result = '';
+      const resolvedIndent = indent === "\t" ? 2 : Number(indent);
       if (mode === 'json') result = formatJson(input, indent);
       else if (mode === 'yaml') result = formatYaml(input, indent);
       else if (mode === 'convert') {
         // Try JSON to YAML first, else YAML to JSON
         try {
           const obj = JSON.parse(input);
-          result = yaml.dump(obj, { indent: indent === '\\t' ? 2 : indent });
+          result = yaml.dump(obj, { indent: resolvedIndent });
         } catch {
           const obj = yaml.load(input);
-          result = JSON.stringify(obj, null, indent);
+          result = JSON.stringify(obj, null, resolvedIndent);
         }
       }
       setOutput(result);
