@@ -94,6 +94,11 @@ export function DashboardPage() {
                 Upgrade
               </Link>
             )}
+            {user?.plan === 'PRO' && (
+              <Link to="/tools" className="text-xs bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded">
+                Tools
+              </Link>
+            )}
             <Link to="/settings" className="text-gray-400 hover:text-white text-sm">
               Settings
             </Link>
