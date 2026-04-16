@@ -123,11 +123,28 @@ export function DashboardPage() {
                 Go Pro
               </Link>
             )}
-            {user?.plan === 'PRO' && (
-              <Link to="/tools" className="text-xs bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded">
+            <div className="relative group">
+              <button className="text-gray-400 hover:text-white text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-1">
                 Tools
-              </Link>
-            )}
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M7 7l3 3 3-3" />
+                </svg>
+              </button>
+              <div className="absolute left-0 mt-2 w-44 bg-gray-900 border border-gray-800 rounded shadow-lg opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 transition-opacity z-20">
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-200 text-sm"
+                  onClick={() => navigate('/tools?tab=jsonyaml')}
+                >JSON / YAML Formatter</button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-200 text-sm"
+                  onClick={() => navigate('/tools?tab=regex')}
+                >Regex Tester</button>
+                <button
+                  className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-200 text-sm"
+                  onClick={() => navigate('/tools?tab=review')}
+                >Code Reviewer</button>
+              </div>
+            </div>
             <Link to="/settings" className="text-gray-400 hover:text-white text-sm">Settings</Link>
             <button onClick={handleLogout} className="text-gray-400 hover:text-white text-sm">Logout</button>
           </div>
