@@ -6,6 +6,7 @@ import { Logo } from '../components/Logo';
 import { CodeEditor } from '../components/CodeEditor';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { TranslationHistory } from '../components/TranslationHistory';
+import { ToolsDropdown } from '../components/ToolsDropdown';
 import type { SupportedLanguage, Translation, TranslationResponse, TranslationHistoryResponse, TranslationStatsResponse } from '../types';
 
 export function DashboardPage() {
@@ -123,7 +124,7 @@ export function DashboardPage() {
                 Go Pro
               </Link>
             )}
-            <Link to="/tools" className="text-gray-400 hover:text-white text-sm">Tools</Link>
+            <ToolsDropdown />
             <Link to="/settings" className="text-gray-400 hover:text-white text-sm">Settings</Link>
             <button onClick={handleLogout} className="text-gray-400 hover:text-white text-sm">Logout</button>
           </div>
