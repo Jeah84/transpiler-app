@@ -20,6 +20,8 @@ model User {
   email            String        @unique
   passwordHash     String
   verified         Boolean       @default(false)
+  verifyToken      String?
+  verifyTokenExpiry DateTime?
   plan             Plan          @default(FREE)
   credits          Int           @default(0)
   createdAt        DateTime      @default(now())
