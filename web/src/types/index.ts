@@ -1,9 +1,10 @@
 export interface User {
   id: string;
   email: string;
-  emailVerified: boolean;
+  verified: boolean;
   plan: 'FREE' | 'PRO';
-  dailyCount?: number;
+  credits: number;
+  monthlyCount?: number;
   createdAt?: string;
   subscription?: {
     plan: 'FREE' | 'PRO';
@@ -23,18 +24,21 @@ export interface Translation {
   targetLanguage: string;
   sourceCode: string;
   translatedCode: string;
-  tokensUsed: number | null;
   createdAt: string;
 }
 
 export interface TranslationResponse {
-  id: string;
   translatedCode: string;
-  sourceLanguage: string;
-  targetLanguage: string;
-  tokensUsed: number;
-  dailyCount: number;
-  dailyLimit: number;
+  credits: number;
+  monthlyCount: number;
+  freeLimit: number;
+}
+
+export interface TranslationStatsResponse {
+  plan: string;
+  credits: number;
+  monthlyCount: number;
+  freeLimit: number;
 }
 
 export interface TranslationHistoryResponse {

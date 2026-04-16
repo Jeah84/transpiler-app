@@ -18,6 +18,11 @@ const loginSchema = z.object({
   password: z.string().min(1),
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().min(1),
+  newPassword: z.string().min(8, 'New password must be at least 8 characters'),
+});
+
 // POST /api/auth/register
 router.post('/register', async (req: Request, res: Response) => {
   try {
@@ -48,7 +53,7 @@ router.post('/register', async (req: Request, res: Response) => {
     const token = signToken(user.id);
     res.status(201).json({
       token,
-      user: { id: user.id, email: user.email, emailVerified: false, plan: user.plan },
+      user: { id: user.id, email: user.email, verified: false, plan: user.plan },
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -80,7 +85,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const token = signToken(user.id);
     res.json({
       token,
-      user: { id: user.id, email: user.email, verified: user.verified, plan: user.plan },
+      user: { id: user.id, email: user.email, verified: user.verified, plan: user.plan, credits: user.credits },
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -117,8 +122,7 @@ router.post('/verify-email', async (req: Request, res: Response) => {
     await prisma.user.update({
       where: { id: userId },
       data: {
-        emailVerified: true,
-        emailVerifiedAt: new Date(),
+        verified: true,
         verifyToken: null,
         verifyTokenExpiry: null,
       },
@@ -161,6 +165,40 @@ router.post('/resend-verification', requireAuth, async (req: AuthRequest, res: R
   }
 });
 
+// POST /api/auth/change-password
+router.post('/change-password', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { currentPassword, newPassword } = changePasswordSchema.parse(req.body);
+
+    const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    const valid = await verifyPassword(currentPassword, user.passwordHash);
+    if (!valid) {
+      res.status(400).json({ error: 'Current password is incorrect' });
+      return;
+    }
+
+    const newHash = await hashPassword(newPassword);
+    await prisma.user.update({
+      where: { id: req.userId! },
+      data: { passwordHash: newHash },
+    });
+
+    res.json({ message: 'Password updated successfully' });
+  } catch (err) {
+    if (err instanceof z.ZodError) {
+      res.status(400).json({ error: err.issues[0].message });
+      return;
+    }
+    console.error('Change password error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
 // GET /api/auth/me
 router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
@@ -174,12 +212,20 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
       return;
     }
 
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const monthlyCount = await prisma.translation.count({
+      where: { userId: req.userId!, createdAt: { gte: startOfMonth } },
+    });
+
     res.json({
       user: {
         id: user.id,
         email: user.email,
         verified: user.verified,
         plan: user.plan,
+        credits: user.credits,
+        monthlyCount,
         createdAt: user.createdAt,
         subscription: user.subscription
           ? {

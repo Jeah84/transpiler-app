@@ -6,7 +6,7 @@ import { Logo } from '../components/Logo';
 import { CodeEditor } from '../components/CodeEditor';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { TranslationHistory } from '../components/TranslationHistory';
-import type { SupportedLanguage, Translation, TranslationResponse, TranslationHistoryResponse } from '../types';
+import type { SupportedLanguage, Translation, TranslationResponse, TranslationHistoryResponse, TranslationStatsResponse } from '../types';
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
@@ -17,18 +17,18 @@ export function DashboardPage() {
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>('JavaScript');
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState('');
-  const [dailyCount, setDailyCount] = useState(0);
-  const [dailyLimit, setDailyLimit] = useState(5);
-
-  // Remove old PRO limit effect
+  const [credits, setCredits] = useState(0);
+  const [monthlyCount, setMonthlyCount] = useState(0);
+  const [freeLimit, setFreeLimit] = useState(10);
   const [history, setHistory] = useState<Translation[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
   const loadStats = async () => {
     try {
-      const data = await api<{ dailyCount: number; dailyLimit: number; plan: string }>('/translate/stats');
-      setDailyCount(data.dailyCount);
-      setDailyLimit(data.dailyLimit);
+      const data = await api<TranslationStatsResponse>('/translate/stats');
+      setCredits(data.credits);
+      setMonthlyCount(data.monthlyCount);
+      setFreeLimit(data.freeLimit);
     } catch {
       // silently fail
     }
@@ -60,11 +60,16 @@ export function DashboardPage() {
         body: { sourceCode, sourceLanguage, targetLanguage },
       });
       setTranslatedCode(data.translatedCode);
-      setDailyCount(data.dailyCount);
-      setDailyLimit(data.dailyLimit);
+      setCredits(data.credits);
+      setMonthlyCount(data.monthlyCount);
+      setFreeLimit(data.freeLimit);
       loadHistory();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Translation failed');
+    } catch (err: any) {
+      if (err?.message?.includes('no_credits')) {
+        setError('You\'ve used all your free translations this month.');
+      } else {
+        setError(err instanceof Error ? err.message : 'Translation failed');
+      }
     } finally {
       setTranslating(false);
     }
@@ -90,21 +95,32 @@ export function DashboardPage() {
     navigate('/');
   };
 
+  const getUsageDisplay = () => {
+    if (user?.plan === 'PRO') return { label: 'Unlimited', color: 'text-indigo-400' };
+    if (credits > 0) return { label: `${credits} credit${credits !== 1 ? 's' : ''}`, color: credits < 20 ? 'text-amber-400' : 'text-gray-400' };
+    const remaining = Math.max(0, freeLimit - monthlyCount);
+    return { label: `${remaining}/${freeLimit} free`, color: remaining <= 3 ? 'text-amber-400' : 'text-gray-400' };
+  };
+
+  const usage = getUsageDisplay();
+  const showOutOfCredits = error.includes('free translations') || error.includes('no_credits');
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       {/* Header */}
       <nav className="border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
-          <Link to="/">
-            <Logo />
-          </Link>
+          <Link to="/"><Logo /></Link>
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-400">
-              {user?.plan === 'PRO' ? `${dailyCount}/unlimited today` : `${dailyCount}/${dailyLimit} today`}
-            </span>
+            <span className={`text-sm ${usage.color}`}>{usage.label}</span>
             {user?.plan === 'FREE' && (
-              <Link to="/pricing" className="text-xs bg-indigo-600/20 text-indigo-400 px-2 py-1 rounded">
-                Upgrade
+              <Link to="/buy-credits" className="text-xs bg-indigo-600/20 border border-indigo-600/40 text-indigo-400 px-3 py-1 rounded-full hover:bg-indigo-600/30 transition">
+                Buy Credits
+              </Link>
+            )}
+            {user?.plan === 'FREE' && (
+              <Link to="/pricing" className="text-xs bg-gray-800 border border-gray-700 text-gray-300 px-3 py-1 rounded-full hover:bg-gray-700 transition">
+                Go Pro
               </Link>
             )}
             {user?.plan === 'PRO' && (
@@ -112,12 +128,8 @@ export function DashboardPage() {
                 Tools
               </Link>
             )}
-            <Link to="/settings" className="text-gray-400 hover:text-white text-sm">
-              Settings
-            </Link>
-            <button onClick={handleLogout} className="text-gray-400 hover:text-white text-sm">
-              Logout
-            </button>
+            <Link to="/settings" className="text-gray-400 hover:text-white text-sm">Settings</Link>
+            <button onClick={handleLogout} className="text-gray-400 hover:text-white text-sm">Logout</button>
           </div>
         </div>
       </nav>
@@ -154,8 +166,18 @@ export function DashboardPage() {
         </div>
 
         {error && (
-          <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-2 rounded-lg text-sm mb-4">
-            {error}
+          <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm mb-4 flex items-center justify-between">
+            <span>{error}</span>
+            {showOutOfCredits && (
+              <div className="flex items-center gap-2 ml-4 shrink-0">
+                <Link to="/buy-credits" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1 rounded-lg transition">
+                  Buy Credits
+                </Link>
+                <Link to="/pricing" className="text-indigo-400 hover:text-indigo-300 text-xs underline">
+                  Go Pro
+                </Link>
+              </div>
+            )}
           </div>
         )}
 
@@ -174,7 +196,6 @@ export function DashboardPage() {
           />
         </div>
 
-        {/* History panel */}
         {showHistory && (
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-3">Translation History</h3>

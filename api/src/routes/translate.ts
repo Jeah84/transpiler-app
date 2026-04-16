@@ -39,9 +39,48 @@ router.get('/stats', requireAuth, async (req: AuthRequest, res: Response) => {
   }
 });
 
+// GET /api/translate/history
+router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const limit = Math.min(parseInt(req.query.limit as string) || 20, 50);
+    const page = parseInt(req.query.page as string) || 1;
+    const skip = (page - 1) * limit;
+
+    const [translations, total] = await Promise.all([
+      prisma.translation.findMany({
+        where: { userId: req.userId! },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip,
+      }),
+      prisma.translation.count({ where: { userId: req.userId! } }),
+    ]);
+
+    res.json({
+      translations: translations.map(t => ({
+        id: t.id,
+        sourceLanguage: t.fromLanguage,
+        targetLanguage: t.toLanguage,
+        sourceCode: t.inputCode,
+        translatedCode: t.outputCode,
+        createdAt: t.createdAt,
+      })),
+      total,
+      page,
+      limit,
+    });
+  } catch (err) {
+    console.error('History error:', err);
+    res.status(500).json({ error: 'Failed to fetch history' });
+  }
+});
+
 // POST /api/translate
 router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
-  const { code, fromLanguage, toLanguage } = req.body;
+  // Support both old and new field names
+  const code = req.body.sourceCode || req.body.code;
+  const fromLanguage = req.body.sourceLanguage || req.body.fromLanguage;
+  const toLanguage = req.body.targetLanguage || req.body.toLanguage;
 
   if (!code || !fromLanguage || !toLanguage) {
     res.status(400).json({ error: 'Missing required fields' });
@@ -135,15 +174,23 @@ ${code}`;
 
     await prisma.$transaction(ops);
 
-    // Get updated credit count
+    // Get updated stats
     const updatedUser = await prisma.user.findUnique({
       where: { id: req.userId! },
       select: { credits: true },
     });
 
+    const nowAfter = new Date();
+    const startOfMonthAfter = new Date(nowAfter.getFullYear(), nowAfter.getMonth(), 1);
+    const monthlyCount = await prisma.translation.count({
+      where: { userId: req.userId!, createdAt: { gte: startOfMonthAfter } },
+    });
+
     res.json({
       translatedCode,
       credits: updatedUser?.credits ?? 0,
+      monthlyCount,
+      freeLimit: FREE_MONTHLY_LIMIT,
     });
   } catch (err: any) {
     console.error('Translation error:', err);
