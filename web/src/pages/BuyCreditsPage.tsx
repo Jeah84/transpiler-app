@@ -70,30 +70,28 @@ const BuyCreditsPage: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           {packs.map(pack => (
             <div
-              key={pack.id}
-              className={`relative rounded-xl border p-6 flex flex-col gap-4 ${
-                pack.popular
-                  ? 'border-indigo-500 bg-indigo-900/20'
-                  : 'border-gray-700 bg-gray-900'
-              }`}
-            >
-              {pack.popular && (
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
-                  Most Popular
-                </div>
-              )}
-              <div>
-                <h2 className="text-xl font-bold">{pack.name}</h2>
-                <p className="text-gray-400 text-sm mt-1">{pack.description}</p>
-              </div>
-              <div className="text-3xl font-bold">
-                ${(pack.price / 100).toFixed(2)}
-                <span className="text-sm font-normal text-gray-400 ml-1">one-time</span>
-              </div>
-              <ul className="text-sm text-gray-300 space-y-1 flex-1">
-                <li>✓ {pack.credits} translations</li>
-                <li>✓ Credits never expire</li>
-                <li>✓ All 27 languages</li>
+              {packs.map(pack => (
+                <div
+                  key={pack.id}
+                  className="relative rounded-xl border border-gray-700 bg-gray-900 p-6 flex flex-col gap-4 transition-colors hover:border-indigo-500 hover:bg-indigo-900/20 cursor-pointer"
+                <div
+                  key={pack.id}
+                  className="relative rounded-xl border border-gray-700 bg-gray-900 p-6 flex flex-col gap-4 transition-colors hover:border-indigo-500 hover:bg-indigo-900/20 cursor-pointer"
+                >
+                  <div>
+                    <h2 className="text-xl font-bold">{pack.name}</h2>
+                    <p className="text-gray-400 text-sm mt-1">{pack.description}</p>
+                  </div>
+                  {/* Most Popular badge inside the Builder Pack card */}
+                  {pack.popular && (
+                    <div className="mb-2 flex justify-center">
+                      <span className="bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">Most Popular</span>
+                    </div>
+                  )}
+                  <div className="text-3xl font-bold">
+                    ${(pack.price / 100).toFixed(2)}
+                    <span className="text-sm font-normal text-gray-400 ml-1">one-time</span>
+                  </div>
                 <li>✓ No subscription required</li>
               </ul>
               <button

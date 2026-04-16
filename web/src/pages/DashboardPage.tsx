@@ -124,30 +124,95 @@ export function DashboardPage() {
               </Link>
             )}
             <div className="relative" style={{ zIndex: 30 }}>
-              <div
-                className="inline-block"
-                onMouseEnter={() => {
-                  const dropdown = document.getElementById('tools-dropdown');
-                  if (dropdown) {
-                    setTimeout(() => dropdown.classList.add('show'), 120);
-                  }
-                }}
-                onMouseLeave={() => {
-                  const dropdown = document.getElementById('tools-dropdown');
-                  if (dropdown) {
-                    setTimeout(() => dropdown.classList.remove('show'), 120);
-                  }
-                }}
-              >
-                <button className="text-gray-400 hover:text-white text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-1">
+              {/** Tools Dropdown using React state for visibility */}
+              <ToolsDropdown navigate={navigate} />
+            </div>
+            // ToolsDropdown component for nav
+            import React, { useState, useRef } from 'react';
+
+            function ToolsDropdown({ navigate }: { navigate: ReturnType<typeof useNavigate> }) {
+              const [open, setOpen] = useState(false);
+              const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+              const handleMouseEnter = () => {
+                if (timeoutRef.current) clearTimeout(timeoutRef.current);
+                setOpen(true);
+              };
+              const handleMouseLeave = () => {
+                timeoutRef.current = setTimeout(() => setOpen(false), 120);
+              };
+
+              return (
+                <div className="inline-block" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                  <button
+                    className="text-gray-400 hover:text-white text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-1"
+                    aria-haspopup="true"
+                    aria-expanded={open}
+                    tabIndex={0}
+                  >
+                    Tools
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={2}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M7 7l3 3 3-3" />
+                    </svg>
+                  </button>
+                  <div
+                    className={`absolute left-0 mt-2 w-44 bg-gray-900 border border-gray-800 rounded shadow-lg transition-opacity z-20 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
+                    style={{ minWidth: '11rem' }}
+                  >
+                    <button
+                      className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-200 text-sm"
+                      onClick={() => navigate('/tools?tab=jsonyaml')}
+                    >JSON / YAML Formatter</button>
+                    <button
+                      className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-200 text-sm"
+                      onClick={() => navigate('/tools?tab=regex')}
+                    >Regex Tester</button>
+                    <button
+                      className="w-full text-left px-4 py-2 hover:bg-gray-800 text-gray-200 text-sm"
+                      onClick={() => navigate('/tools?tab=review')}
+                    >Code Reviewer</button>
+                  </div>
+                </div>
+              );
+            }
+            const [open, setOpen] = useState(false);
+            const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+            // Open on hover or click
+            const handleMouseEnter = () => {
+              if (timeoutRef.current) clearTimeout(timeoutRef.current);
+              setOpen(true);
+            };
+            const handleMouseLeave = () => {
+              timeoutRef.current = setTimeout(() => setOpen(false), 120);
+            };
+            const handleButtonClick = () => setOpen((v) => !v);
+            const handleButtonKeyDown = (e: React.KeyboardEvent) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setOpen((v) => !v);
+              }
+              if (e.key === 'Escape') setOpen(false);
+            };
+
+            return (
+              <div className="inline-block" onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
+                <button
+                  className="text-gray-400 hover:text-white text-sm px-2 py-1 rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 flex items-center gap-1"
+                  aria-haspopup="true"
+                  aria-expanded={open}
+                  tabIndex={0}
+                  onClick={handleButtonClick}
+                  onKeyDown={handleButtonKeyDown}
+                  type="button"
+                >
                   Tools
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 20 20" stroke="currentColor" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M7 7l3 3 3-3" />
                   </svg>
                 </button>
                 <div
-                  id="tools-dropdown"
-                  className="absolute left-0 mt-2 w-44 bg-gray-900 border border-gray-800 rounded shadow-lg opacity-0 pointer-events-none transition-opacity z-20"
+                  className={`absolute left-0 mt-2 w-44 bg-gray-900 border border-gray-800 rounded shadow-lg transition-opacity z-20 ${open ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}
                   style={{ minWidth: '11rem' }}
                 >
                   <button
@@ -164,7 +229,7 @@ export function DashboardPage() {
                   >Code Reviewer</button>
                 </div>
               </div>
-            </div>
+            );
             <Link to="/settings" className="text-gray-400 hover:text-white text-sm">Settings</Link>
             <button onClick={handleLogout} className="text-gray-400 hover:text-white text-sm">Logout</button>
           </div>
