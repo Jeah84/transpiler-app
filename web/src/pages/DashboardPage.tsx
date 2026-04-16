@@ -126,13 +126,13 @@ export function DashboardPage() {
             <div className="relative" style={{ zIndex: 30 }}>
               <div
                 className="inline-block"
-                onMouseEnter={e => {
+                onMouseEnter={() => {
                   const dropdown = document.getElementById('tools-dropdown');
                   if (dropdown) {
                     setTimeout(() => dropdown.classList.add('show'), 120);
                   }
                 }}
-                onMouseLeave={e => {
+                onMouseLeave={() => {
                   const dropdown = document.getElementById('tools-dropdown');
                   if (dropdown) {
                     setTimeout(() => dropdown.classList.remove('show'), 120);
