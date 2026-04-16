@@ -1,12 +1,13 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { LandingPage } from './pages/LandingPage';
+import BuyCreditsPage from './pages/BuyCreditsPage';
 import { RegisterPage } from './pages/RegisterPage';
 import { LoginPage } from './pages/LoginPage';
 import { DashboardPage } from './pages/DashboardPage';
 import ToolsPage from './pages/ToolsPage';
 import { SettingsPage } from './pages/SettingsPage';
-import { PricingPage } from './pages/PricingPage';
+import PricingPage from './pages/PricingPage';
 import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
@@ -26,6 +27,7 @@ function AppRoutes() {
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/pricing" element={<PricingPage />} />
+                <Route path="/buy-credits" element={<BuyCreditsPage />} />
       <Route path="/verify-email" element={<VerifyEmailPage />} />
       <Route path="/terms" element={<TermsOfService />} />
       <Route path="/privacy" element={<PrivacyPolicy />} />

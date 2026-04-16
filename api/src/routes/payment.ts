@@ -17,27 +17,63 @@ function getStripe() {
   }
   return _stripe;
 }
+
+// Credit packs configuration
+export const CREDIT_PACKS = [
+  {
+    id: 'starter',
+    name: 'Starter Pack',
+    credits: 50,
+    price: 299, // $2.99 in cents
+    stripePriceId: env.stripeCreditsStarterPriceId,
+    description: '50 translations',
+    popular: false,
+  },
+  {
+    id: 'builder',
+    name: 'Builder Pack',
+    credits: 200,
+    price: 799, // $7.99 in cents
+    stripePriceId: env.stripeCreditsBuilderPriceId,
+    description: '200 translations',
+    popular: true,
+  },
+  {
+    id: 'power',
+    name: 'Power Pack',
+    credits: 500,
+    price: 1499, // $14.99 in cents
+    stripePriceId: env.stripesCreditsPowerPriceId,
+    description: '500 translations',
+    popular: false,
+  },
+];
+
 const router = Router();
 
-// POST /api/payment/create-checkout-session
+// GET /api/payment/credit-packs - return available packs
+router.get('/credit-packs', (_req: Request, res: Response) => {
+  res.json(CREDIT_PACKS.map(({ id, name, credits, price, description, popular }) => ({
+    id, name, credits, price, description, popular,
+  })));
+});
+
+// POST /api/payment/create-checkout-session - Pro subscription
 router.post('/create-checkout-session', requireAuth, async (req: AuthRequest, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId! },
       include: { subscription: true },
     });
-
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
-
     if (user.plan === 'PRO') {
       res.status(400).json({ error: 'Already on Pro plan' });
       return;
     }
 
-    // Get or create Stripe customer
     let customerId = user.subscription?.stripeCustomerId;
     if (!customerId) {
       const customer = await getStripe().customers.create({ email: user.email });
@@ -48,22 +84,75 @@ router.post('/create-checkout-session', requireAuth, async (req: AuthRequest, re
       customer: customerId,
       mode: 'subscription',
       payment_method_types: ['card'],
+      allow_promotion_codes: true,
       line_items: [
         {
           price: env.stripePriceIdMonthly,
           quantity: 1,
         },
       ],
-      allow_promotion_codes: true,
       success_url: `${env.frontendUrl}/dashboard?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${env.frontendUrl}/pricing`,
-      metadata: { userId: user.id },
+      metadata: { userId: user.id, type: 'subscription' },
     });
 
     res.json({ url: session.url });
   } catch (err) {
     console.error('Checkout session error:', err);
     res.status(500).json({ error: 'Failed to create checkout session' });
+  }
+});
+
+// POST /api/payment/buy-credits - Credit pack purchase
+router.post('/buy-credits', requireAuth, async (req: AuthRequest, res: Response) => {
+  try {
+    const { packId } = req.body;
+    const pack = CREDIT_PACKS.find(p => p.id === packId);
+    if (!pack) {
+      res.status(400).json({ error: 'Invalid credit pack' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: req.userId! },
+      include: { subscription: true },
+    });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    let customerId = user.subscription?.stripeCustomerId;
+    if (!customerId) {
+      const customer = await getStripe().customers.create({ email: user.email });
+      customerId = customer.id;
+    }
+
+    const session = await getStripe().checkout.sessions.create({
+      customer: customerId,
+      mode: 'payment',
+      payment_method_types: ['card'],
+      allow_promotion_codes: true,
+      line_items: [
+        {
+          price: pack.stripePriceId,
+          quantity: 1,
+        },
+      ],
+      success_url: `${env.frontendUrl}/dashboard?credits_added=true`,
+      cancel_url: `${env.frontendUrl}/pricing`,
+      metadata: {
+        userId: user.id,
+        type: 'credits',
+        packId: pack.id,
+        credits: String(pack.credits),
+      },
+    });
+
+    res.json({ url: session.url });
+  } catch (err) {
+    console.error('Buy credits error:', err);
+    res.status(500).json({ error: 'Failed to create credits checkout session' });
   }
 });
 
@@ -74,17 +163,14 @@ router.post('/portal', requireAuth, async (req: AuthRequest, res: Response) => {
       where: { id: req.userId! },
       include: { subscription: true },
     });
-
     if (!user?.subscription?.stripeCustomerId) {
       res.status(400).json({ error: 'No active subscription' });
       return;
     }
-
     const session = await getStripe().billingPortal.sessions.create({
       customer: user.subscription.stripeCustomerId,
       return_url: `${env.frontendUrl}/settings`,
     });
-
     res.json({ url: session.url });
   } catch (err) {
     console.error('Portal session error:', err);
@@ -95,8 +181,8 @@ router.post('/portal', requireAuth, async (req: AuthRequest, res: Response) => {
 // POST /api/payment/webhook
 router.post('/webhook', async (req: Request, res: Response) => {
   const sig = req.headers['stripe-signature'] as string;
-
   let event: Stripe.Event;
+
   try {
     event = getStripe().webhooks.constructEvent(req.body, sig, env.stripeWebhookSecret);
   } catch (err) {
@@ -110,35 +196,58 @@ router.post('/webhook', async (req: Request, res: Response) => {
       case 'checkout.session.completed': {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
+        const type = session.metadata?.type;
+
         if (!userId) break;
 
-        const subscriptionId = session.subscription as string;
-        const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
+        if (type === 'credits') {
+          // Handle credit pack purchase
+          const credits = parseInt(session.metadata?.credits || '0', 10);
+          await prisma.$transaction([
+            prisma.user.update({
+              where: { id: userId },
+              data: { credits: { increment: credits } },
+            }),
+            prisma.purchase.create({
+              data: {
+                userId,
+                stripeSessionId: session.id,
+                credits,
+                amount: session.amount_total || 0,
+              },
+            }),
+          ]);
+          console.log(`Added ${credits} credits to user ${userId}`);
 
-        await prisma.$transaction([
-          prisma.subscription.upsert({
-            where: { userId },
-            create: {
-              userId,
-              plan: 'PRO',
-              active: true,
-              stripeCustomerId: session.customer as string,
-              stripeSubscriptionId: subscriptionId,
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            },
-            update: {
-              plan: 'PRO',
-              active: true,
-              stripeCustomerId: session.customer as string,
-              stripeSubscriptionId: subscriptionId,
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-            },
-          }),
-          prisma.user.update({
-            where: { id: userId },
-            data: { plan: 'PRO' },
-          }),
-        ]);
+        } else if (type === 'subscription') {
+          // Handle Pro subscription
+          const subscriptionId = session.subscription as string;
+          const subscription = await getStripe().subscriptions.retrieve(subscriptionId);
+          await prisma.$transaction([
+            prisma.subscription.upsert({
+              where: { userId },
+              create: {
+                userId,
+                plan: 'PRO',
+                active: true,
+                stripeCustomerId: session.customer as string,
+                stripeSubscriptionId: subscriptionId,
+                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+              },
+              update: {
+                plan: 'PRO',
+                active: true,
+                stripeCustomerId: session.customer as string,
+                stripeSubscriptionId: subscriptionId,
+                currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+              },
+            }),
+            prisma.user.update({
+              where: { id: userId },
+              data: { plan: 'PRO' },
+            }),
+          ]);
+        }
         break;
       }
 
@@ -148,7 +257,6 @@ router.post('/webhook', async (req: Request, res: Response) => {
           where: { stripeSubscriptionId: subscription.id },
         });
         if (!sub) break;
-
         const active = subscription.status === 'active';
         await prisma.$transaction([
           prisma.subscription.update({
@@ -156,7 +264,7 @@ router.post('/webhook', async (req: Request, res: Response) => {
             data: {
               active,
               plan: active ? 'PRO' : 'FREE',
-              currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+              currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
             },
           }),
           prisma.user.update({
@@ -173,7 +281,6 @@ router.post('/webhook', async (req: Request, res: Response) => {
           where: { stripeSubscriptionId: subscription.id },
         });
         if (!sub) break;
-
         await prisma.$transaction([
           prisma.subscription.update({
             where: { id: sub.id },

@@ -1,3 +1,6 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -7,53 +10,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id                String    @id @default(cuid())
-  email             String    @unique
-  passwordHash      String
-  emailVerified     Boolean   @default(false)
-  emailVerifiedAt   DateTime?
-  verifyToken       String?
-  verifyTokenExpiry DateTime?
-  plan              Plan      @default(FREE)
-  dailyCount        Int       @default(0)
-  dailyDate         String?
-  createdAt         DateTime  @default(now())
-  updatedAt         DateTime  @updatedAt
-  translations      Translation[]
-  subscription      Subscription?
-
-  @@index([email])
+enum Plan {
+  FREE
+  PRO
 }
 
-model Translation {
-  id             String   @id @default(cuid())
-  userId         String
-  sourceLanguage String
-  targetLanguage String
-  sourceCode     String
-  translatedCode String
-  tokensUsed     Int?
-  createdAt      DateTime @default(now())
-  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
+model User {
+  id               String        @id @default(cuid())
+  email            String        @unique
+  passwordHash     String
+  verified         Boolean       @default(false)
+  plan             Plan          @default(FREE)
+  credits          Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  subscription     Subscription?
+  translations     Translation[]
+  purchases        Purchase[]
 }
 
 model Subscription {
   id                   String   @id @default(cuid())
   userId               String   @unique
+  user                 User     @relation(fields: [userId], references: [id])
   plan                 Plan     @default(FREE)
-  active               Boolean  @default(true)
+  active               Boolean  @default(false)
   stripeCustomerId     String?
   stripeSubscriptionId String?
   currentPeriodEnd     DateTime?
   createdAt            DateTime @default(now())
   updatedAt            DateTime @updatedAt
-  user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
-enum Plan {
-  FREE
-  PRO
+model Translation {
+  id           String   @id @default(cuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id])
+  fromLanguage String
+  toLanguage   String
+  inputCode    String
+  outputCode   String
+  createdAt    DateTime @default(now())
+}
+
+model Purchase {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  stripeSessionId String   @unique
+  credits         Int
+  amount          Int      // in cents
+  createdAt       DateTime @default(now())
 }

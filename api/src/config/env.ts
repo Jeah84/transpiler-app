@@ -1,6 +1,3 @@
-import dotenv from 'dotenv';
-dotenv.config();
-
 export const env = {
   port: Number(process.env.PORT || 4000),
   databaseUrl: process.env.DATABASE_URL!,
@@ -11,6 +8,10 @@ export const env = {
   stripeSecretKey: process.env.STRIPE_SECRET_KEY!,
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET!,
   stripePriceIdMonthly: process.env.STRIPE_PRICE_ID_MONTHLY!,
+  // Credit pack price IDs (one-time payments)
+  stripeCreditsStarterPriceId: process.env.STRIPE_CREDITS_STARTER_PRICE_ID!,
+  stripeCreditsBuilderPriceId: process.env.STRIPE_CREDITS_BUILDER_PRICE_ID!,
+  stripesCreditsPowerPriceId: process.env.STRIPE_CREDITS_POWER_PRICE_ID!,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:4000',
 };

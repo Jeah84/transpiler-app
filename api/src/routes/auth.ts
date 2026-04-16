@@ -80,7 +80,7 @@ router.post('/login', async (req: Request, res: Response) => {
     const token = signToken(user.id);
     res.json({
       token,
-      user: { id: user.id, email: user.email, emailVerified: user.emailVerified, plan: user.plan },
+      user: { id: user.id, email: user.email, verified: user.verified, plan: user.plan },
     });
   } catch (err) {
     if (err instanceof z.ZodError) {
@@ -109,7 +109,7 @@ router.post('/verify-email', async (req: Request, res: Response) => {
       return;
     }
 
-    if (user.emailVerified) {
+    if (user.verified) {
       res.json({ message: 'Email already verified' });
       return;
     }
@@ -139,7 +139,7 @@ router.post('/resend-verification', requireAuth, async (req: AuthRequest, res: R
       return;
     }
 
-    if (user.emailVerified) {
+    if (user.verified) {
       res.json({ message: 'Email already verified' });
       return;
     }
@@ -178,9 +178,8 @@ router.get('/me', requireAuth, async (req: AuthRequest, res: Response) => {
       user: {
         id: user.id,
         email: user.email,
-        emailVerified: user.emailVerified,
+        verified: user.verified,
         plan: user.plan,
-        dailyCount: user.dailyCount,
         createdAt: user.createdAt,
         subscription: user.subscription
           ? {

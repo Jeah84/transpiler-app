@@ -5,6 +5,7 @@ import { env } from './config/env';
 import authRoutes from './routes/auth';
 import translateRoutes from './routes/translate';
 import paymentRoutes from './routes/payment';
+import toolsRoutes from './routes/tools';
 
 const app = express();
 
@@ -41,6 +42,7 @@ app.get('/healthz', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/translate', translateRoutes);
 app.use('/api/payment', paymentRoutes);
+app.use('/api/tools', toolsRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {
