@@ -107,9 +107,7 @@ const PricingPage: React.FC = () => {
           {CREDIT_PACKS.map(pack => (
             <div
               key={pack.id}
-              className={`relative rounded-xl border p-6 flex flex-col gap-4 ${
-                pack.popular ? 'border-indigo-500 bg-indigo-900/20' : 'border-gray-700 bg-gray-900'
-              }`}
+              className="group relative rounded-xl border border-gray-700 bg-gray-900 p-6 flex flex-col gap-4 transition-all duration-200 hover:border-indigo-500 hover:bg-indigo-950/30 hover:shadow-lg hover:shadow-indigo-500/10 cursor-pointer"
             >
               {pack.popular && (
                 <div className="absolute -top-3 left-1/2 -translate-x-1/2 bg-indigo-600 text-white text-xs font-bold px-3 py-1 rounded-full">
@@ -117,19 +115,15 @@ const PricingPage: React.FC = () => {
                 </div>
               )}
               <div>
-                <h3 className="text-lg font-bold">{pack.name}</h3>
+                <h3 className="text-lg font-bold group-hover:text-indigo-300 transition-colors">{pack.name}</h3>
                 <p className="text-gray-400 text-sm">{pack.description}</p>
               </div>
-              <div className="text-3xl font-bold">{pack.price}</div>
+              <div className="text-3xl font-bold group-hover:text-indigo-300 transition-colors">{pack.price}</div>
               <p className="text-gray-300 text-sm">{pack.credits} translations</p>
               <button
                 onClick={() => handleBuyCredits(pack.id)}
                 disabled={loadingPack === pack.id}
-                className={`w-full py-2 rounded-lg font-semibold transition ${
-                  pack.popular
-                    ? 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                    : 'bg-gray-700 hover:bg-gray-600 text-white'
-                } disabled:opacity-50`}
+                className="w-full py-2 rounded-lg font-semibold transition bg-gray-800 border border-gray-700 text-gray-300 group-hover:bg-indigo-600 group-hover:border-indigo-600 group-hover:text-white disabled:opacity-50"
               >
                 {loadingPack === pack.id ? 'Redirecting...' : `Buy ${pack.name}`}
               </button>
