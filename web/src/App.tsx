@@ -12,6 +12,7 @@ import { VerifyEmailPage } from './pages/VerifyEmailPage';
 import TermsOfService from './pages/TermsOfService';
 import PrivacyPolicy from './pages/PrivacyPolicy';
 import { Analytics } from '@vercel/analytics/react';
+import { ThemeProvider } from './context/ThemeContext';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
@@ -41,12 +42,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <AppRoutes />
-      </AuthProvider>
-      <Analytics />
-    </BrowserRouter>
+    <ThemeProvider>
+      <BrowserRouter>
+        <AuthProvider>
+          <AppRoutes />
+        </AuthProvider>
+        <Analytics />
+      </BrowserRouter>
+    </ThemeProvider>
   );
 }
 
