@@ -6,6 +6,7 @@ import authRoutes from './routes/auth';
 import translateRoutes from './routes/translate';
 import paymentRoutes from './routes/payment';
 import toolsRoutes from './routes/tools';
+import githubRoutes from './routes/github';
 
 const app = express();
 
@@ -43,6 +44,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/translate', translateRoutes);
 app.use('/api/payment', paymentRoutes);
 app.use('/api/tools', toolsRoutes);
+app.use('/api/github', githubRoutes);
 
 // Health check
 app.get('/api/health', (_req, res) => {

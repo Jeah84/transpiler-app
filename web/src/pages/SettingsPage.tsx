@@ -6,7 +6,7 @@ import { Logo } from '../components/Logo';
 import { useTheme, ACCENT_THEMES, type ThemeMode, type AccentTheme } from '../context/ThemeContext';
 import { useEditorPreferences, EDITOR_FONTS, EDITOR_SIZES, type EditorFont, type EditorFontSize, type EditorCursor } from '../hooks/useEditorPreferences';
 
-type Section = 'account' | 'security' | 'subscription' | 'usage' | 'appearance';
+type Section = 'account' | 'security' | 'subscription' | 'usage' | 'appearance' | 'connected-apps';
 
 interface UsageStats {
   monthlyCount: number;
@@ -33,9 +33,23 @@ export function SettingsPage() {
 
   // Usage stats
   const [usageStats, setUsageStats] = useState<UsageStats | null>(null);
+  const [githubConnected, setGithubConnected] = useState(false);
+  const [githubUsername, setGithubUsername] = useState<string | null>(null);
+  const [githubLoading, setGithubLoading] = useState(true);
+  const [githubDisconnecting, setGithubDisconnecting] = useState(false);
 
   useEffect(() => {
     loadUsageStats();
+    api<{ connected: boolean; username: string | null }>('/github/status')
+      .then(d => { setGithubConnected(d.connected); setGithubUsername(d.username); })
+      .catch(() => {}).finally(() => setGithubLoading(false));
+    const params = new URLSearchParams(window.location.search);
+    const gp = params.get('github');
+    const sp = params.get('section') as Section | null;
+    if (sp) setActiveSection(sp);
+    if (gp === 'connected') showMessage('success', `GitHub connected as @${params.get('username')}`);
+    if (gp === 'error') showMessage('error', 'GitHub connection failed. Please try again.');
+    if (gp) window.history.replaceState({}, '', window.location.pathname);
   }, []);
 
   const loadUsageStats = async () => {
@@ -109,6 +123,16 @@ export function SettingsPage() {
     }
   };
 
+  const handleGithubDisconnect = async () => {
+    setGithubDisconnecting(true);
+    try {
+      await api('/github/disconnect', { method: 'DELETE' });
+      setGithubConnected(false); setGithubUsername(null);
+      showMessage('success', 'GitHub disconnected');
+    } catch { showMessage('error', 'Failed to disconnect'); }
+    finally { setGithubDisconnecting(false); }
+  };
+
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -120,6 +144,7 @@ export function SettingsPage() {
     { id: 'appearance', label: 'Appearance', icon: '🎨' },
     { id: 'subscription', label: 'Subscription', icon: '⚡' },
     { id: 'usage',      label: 'Usage',      icon: '📊' },
+    { id: 'connected-apps', label: 'Connected Apps', icon: '🔗' },
   ];
 
   return (
@@ -530,6 +555,49 @@ export function SettingsPage() {
                     </div>
 
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* ── Connected Apps ── */}
+            {activeSection === 'connected-apps' && (
+              <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                <div className="px-6 py-4 border-b border-gray-800">
+                  <h2 className="font-semibold">Connected Apps</h2>
+                  <p className="text-xs text-gray-500 mt-0.5">Manage third-party integrations</p>
+                </div>
+                <div className="px-6 py-5 space-y-4">
+                  <div className="flex items-center justify-between py-3 border-b border-gray-800/60">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-gray-800 border border-gray-700 rounded-xl flex items-center justify-center shrink-0">
+                        <svg className="w-5 h-5 text-white" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium">GitHub</p>
+                        <p className="text-xs text-gray-500 mt-0.5">
+                          {githubLoading ? 'Checking…' : githubConnected
+                            ? <span className="text-green-400">Connected as <span className="font-medium">@{githubUsername}</span></span>
+                            : 'Push translated code to your repositories'}
+                        </p>
+                      </div>
+                    </div>
+                    <div>
+                      {githubLoading
+                        ? <div className="w-24 h-8 bg-gray-800 rounded-lg animate-pulse"/>
+                        : githubConnected
+                          ? <button onClick={handleGithubDisconnect} disabled={githubDisconnecting}
+                              className="px-3 py-1.5 text-xs border border-gray-700 hover:border-red-500/50 hover:text-red-400 text-gray-400 rounded-lg transition disabled:opacity-50">
+                              {githubDisconnecting ? 'Disconnecting…' : 'Disconnect'}
+                            </button>
+                          : <a href={`${import.meta.env.VITE_API_URL || 'https://api.transpiler.us'}/api/github/connect`}
+                              className="px-3 py-1.5 text-xs bg-gray-800 hover:bg-gray-700 border border-gray-700 hover:border-gray-600 text-white rounded-lg transition inline-flex items-center gap-1.5">
+                              <svg className="w-3.5 h-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+                              Connect GitHub
+                            </a>
+                      }
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-600">Push translated code and tool outputs directly to any of your GitHub repositories.</p>
                 </div>
               </div>
             )}

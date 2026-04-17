@@ -31,6 +31,8 @@ model User {
   subscription     Subscription?
   translations     Translation[]
   purchases        Purchase[]
+  githubAccessToken String?
+  githubUsername    String?
 }
 
 model Subscription {

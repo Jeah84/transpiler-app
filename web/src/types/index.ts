@@ -5,6 +5,7 @@ export interface User {
   plan: 'FREE' | 'PRO';
   credits: number;
   monthlyCount?: number;
+  githubUsername?: string | null;
   createdAt?: string;
   subscription?: {
     plan: 'FREE' | 'PRO';

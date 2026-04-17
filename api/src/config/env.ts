@@ -13,5 +13,8 @@ export const env = {
   stripeCreditsBuilderPriceId: process.env.STRIPE_CREDITS_BUILDER_PRICE_ID!,
   stripesCreditsPowerPriceId: process.env.STRIPE_CREDITS_POWER_PRICE_ID!,
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  githubClientId: process.env.GITHUB_CLIENT_ID || '',
+  githubClientSecret: process.env.GITHUB_CLIENT_SECRET || '',
+  githubCallbackUrl: process.env.GITHUB_CALLBACK_URL || 'http://localhost:4000/api/github/callback',
   appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:4000',
 };
