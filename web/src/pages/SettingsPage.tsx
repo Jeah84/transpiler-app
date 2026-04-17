@@ -3,8 +3,10 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { api } from '../lib/api';
 import { Logo } from '../components/Logo';
+import { useTheme, ACCENT_THEMES, type ThemeMode, type AccentTheme } from '../context/ThemeContext';
+import { useEditorPreferences, EDITOR_FONTS, EDITOR_SIZES, type EditorFont, type EditorFontSize, type EditorCursor } from '../hooks/useEditorPreferences';
 
-type Section = 'account' | 'security' | 'subscription' | 'usage';
+type Section = 'account' | 'security' | 'subscription' | 'usage' | 'appearance';
 
 interface UsageStats {
   monthlyCount: number;
@@ -15,6 +17,8 @@ interface UsageStats {
 
 export function SettingsPage() {
   const { user, logout } = useAuth();
+  const { mode, accent, setMode, setAccent } = useTheme();
+  const { prefs, update: updatePrefs } = useEditorPreferences();
   const navigate = useNavigate();
   const [activeSection, setActiveSection] = useState<Section>('account');
   const [resending, setResending] = useState(false);
@@ -111,10 +115,11 @@ export function SettingsPage() {
   };
 
   const navItems: { id: Section; label: string; icon: string }[] = [
-    { id: 'account', label: 'Account', icon: '👤' },
-    { id: 'security', label: 'Security', icon: '🔒' },
+    { id: 'account',    label: 'Account',    icon: '👤' },
+    { id: 'security',   label: 'Security',   icon: '🔒' },
+    { id: 'appearance', label: 'Appearance', icon: '🎨' },
     { id: 'subscription', label: 'Subscription', icon: '⚡' },
-    { id: 'usage', label: 'Usage', icon: '📊' },
+    { id: 'usage',      label: 'Usage',      icon: '📊' },
   ];
 
   return (
@@ -339,6 +344,194 @@ export function SettingsPage() {
                   </div>
                 </div>
               </>
+            )}
+
+            {/* ── Appearance ── */}
+            {activeSection === 'appearance' && (
+              <div className="space-y-6">
+
+                {/* Theme mode */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-800">
+                    <h2 className="font-semibold">Theme</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">Choose how the app looks</p>
+                  </div>
+                  <div className="px-6 py-5">
+                    <div className="flex gap-3">
+                      {(['dark', 'light', 'auto'] as ThemeMode[]).map(m => (
+                        <button
+                          key={m}
+                          onClick={() => setMode(m)}
+                          className={`flex-1 py-3 rounded-lg border text-sm font-medium capitalize transition ${
+                            mode === m
+                              ? 'border-indigo-500 bg-indigo-600/20 text-indigo-300'
+                              : 'border-gray-700 bg-gray-800 text-gray-400 hover:border-gray-600 hover:text-white'
+                          }`}
+                        >
+                          {m === 'dark' ? '🌙 Dark' : m === 'light' ? '☀️ Light' : '⚙️ Auto'}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Accent color */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-800">
+                    <h2 className="font-semibold">Accent Color</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {user?.plan === 'PRO' ? 'All accents unlocked' : 'Free: 2 colors • Pro: 9 colors'}
+                    </p>
+                  </div>
+                  <div className="px-6 py-5">
+                    <div className="grid grid-cols-3 gap-3">
+                      {(Object.entries(ACCENT_THEMES) as [AccentTheme, typeof ACCENT_THEMES[AccentTheme]][]).map(([key, cfg]) => {
+                        const locked = cfg.proOnly && user?.plan !== 'PRO';
+                        return (
+                          <button
+                            key={key}
+                            onClick={() => !locked && setAccent(key)}
+                            disabled={locked}
+                            className={`relative flex items-center gap-2.5 px-3 py-2.5 rounded-lg border text-sm transition ${
+                              accent === key
+                                ? 'border-indigo-500 bg-indigo-600/20 text-white'
+                                : locked
+                                  ? 'border-gray-800 bg-gray-800/40 text-gray-600 cursor-not-allowed'
+                                  : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:text-white'
+                            }`}
+                          >
+                            <span
+                              className="w-4 h-4 rounded-full shrink-0 ring-2 ring-offset-2 ring-offset-gray-900"
+                              style={{ backgroundColor: cfg.primary, outline: accent === key ? `2px solid ${cfg.primary}` : '2px solid transparent', outlineOffset: '2px' }}
+                            />
+                            <span className="truncate">{cfg.label}</span>
+                            {locked && <span className="ml-auto text-xs">🔒</span>}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    {user?.plan !== 'PRO' && (
+                      <p className="text-xs text-gray-500 mt-3">
+                        <Link to="/pricing" className="text-indigo-400 hover:text-indigo-300 underline">Upgrade to Pro</Link> to unlock all accent colors.
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Editor preferences */}
+                <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <div className="px-6 py-4 border-b border-gray-800">
+                    <h2 className="font-semibold">Code Editor</h2>
+                    <p className="text-xs text-gray-500 mt-0.5">Customize the editor font and behavior</p>
+                  </div>
+                  <div className="px-6 py-5 space-y-5">
+
+                    {/* Font family */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Font Family</label>
+                      <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                        {EDITOR_FONTS.map(f => {
+                          const locked = f.proOnly && user?.plan !== 'PRO';
+                          return (
+                            <button
+                              key={f.value}
+                              onClick={() => !locked && updatePrefs({ font: f.value as EditorFont })}
+                              disabled={locked}
+                              className={`px-3 py-2 rounded-lg border text-sm transition text-left ${
+                                prefs.font === f.value
+                                  ? 'border-indigo-500 bg-indigo-600/20 text-white'
+                                  : locked
+                                    ? 'border-gray-800 text-gray-600 cursor-not-allowed'
+                                    : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:text-white'
+                              }`}
+                              style={{ fontFamily: `'${f.value}', monospace` }}
+                            >
+                              {f.label} {locked && '🔒'}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Font size */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Font Size</label>
+                      <div className="flex gap-2 flex-wrap">
+                        {EDITOR_SIZES.map(size => (
+                          <button
+                            key={size}
+                            onClick={() => updatePrefs({ fontSize: size as EditorFontSize })}
+                            className={`w-14 py-2 rounded-lg border text-sm transition ${
+                              prefs.fontSize === size
+                                ? 'border-indigo-500 bg-indigo-600/20 text-white'
+                                : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:text-white'
+                            }`}
+                          >
+                            {size}px
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Cursor style */}
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">Cursor Style</label>
+                      <div className="flex gap-2">
+                        {(['line', 'block', 'underline'] as EditorCursor[]).map(c => (
+                          <button
+                            key={c}
+                            onClick={() => updatePrefs({ cursor: c })}
+                            className={`px-4 py-2 rounded-lg border text-sm capitalize transition ${
+                              prefs.cursor === c
+                                ? 'border-indigo-500 bg-indigo-600/20 text-white'
+                                : 'border-gray-700 bg-gray-800 text-gray-300 hover:border-gray-600 hover:text-white'
+                            }`}
+                          >
+                            {c}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Word wrap */}
+                    <div className="flex items-center justify-between py-2 border-t border-gray-800/60">
+                      <div>
+                        <p className="text-sm font-medium">Word Wrap</p>
+                        <p className="text-xs text-gray-500 mt-0.5">Wrap long lines in the editor</p>
+                      </div>
+                      <button
+                        onClick={() => updatePrefs({ wordWrap: !prefs.wordWrap })}
+                        className={`relative w-10 h-6 rounded-full transition-colors ${prefs.wordWrap ? 'bg-indigo-600' : 'bg-gray-700'}`}
+                      >
+                        <span className={`absolute top-1 left-1 w-4 h-4 rounded-full bg-white transition-transform ${prefs.wordWrap ? 'translate-x-4' : ''}`} />
+                      </button>
+                    </div>
+
+                    {/* Preview */}
+                    <div className="border-t border-gray-800/60 pt-4">
+                      <p className="text-xs text-gray-500 mb-2">Preview</p>
+                      <div
+                        className="bg-gray-800 border border-gray-700 rounded-lg p-4 text-gray-300"
+                        style={{ fontFamily: `'${prefs.font}', monospace`, fontSize: `${prefs.fontSize}px` }}
+                      >
+                        <span className="text-indigo-400">function</span>{' '}
+                        <span className="text-yellow-300">greet</span>
+                        <span className="text-gray-400">(</span>
+                        <span className="text-orange-300">name</span>
+                        <span className="text-gray-400">) {'{'}</span>
+                        <br />
+                        {'  '}
+                        <span className="text-purple-400">return</span>{' '}
+                        <span className="text-green-400">{'`Hello, ${name}`'}</span>
+                        <span className="text-gray-400">;</span>
+                        <br />
+                        <span className="text-gray-400">{'}'}</span>
+                      </div>
+                    </div>
+
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* ── Usage ── */}

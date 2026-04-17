@@ -79,12 +79,41 @@ router.get('/history', requireAuth, async (req: AuthRequest, res: Response) => {
 router.post('/', requireAuth, async (req: AuthRequest, res: Response) => {
   // Support both old and new field names
   const code = req.body.sourceCode || req.body.code;
-  const fromLanguage = req.body.sourceLanguage || req.body.fromLanguage;
+  const rawFromLanguage = req.body.sourceLanguage || req.body.fromLanguage || 'auto';
   const toLanguage = req.body.targetLanguage || req.body.toLanguage;
 
-  if (!code || !fromLanguage || !toLanguage) {
+  if (!code || !toLanguage) {
     res.status(400).json({ error: 'Missing required fields' });
     return;
+  }
+
+  // Auto-detect source language if not provided or set to 'auto'
+  let fromLanguage = rawFromLanguage;
+  if (!rawFromLanguage || rawFromLanguage === 'auto') {
+    try {
+      const detectResponse = await fetch(TOGETHER_API_URL, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${env.togetherApiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'meta-llama/Llama-3.3-70B-Instruct-Turbo',
+          messages: [{
+            role: 'user',
+            content: `What programming language is this code? Reply with ONLY the language name (e.g. "Python", "JavaScript", "TypeScript", "Go"). Nothing else.\n\n${code.substring(0, 600)}`,
+          }],
+          max_tokens: 10,
+          temperature: 0,
+        }),
+      });
+      if (detectResponse.ok) {
+        const detectData = await detectResponse.json() as any;
+        fromLanguage = detectData.choices?.[0]?.message?.content?.trim() || 'Unknown';
+      }
+    } catch {
+      fromLanguage = 'Unknown';
+    }
   }
 
   try {
@@ -188,6 +217,7 @@ ${code}`;
 
     res.json({
       translatedCode,
+      detectedLanguage: rawFromLanguage === 'auto' ? fromLanguage : undefined,
       credits: updatedUser?.credits ?? 0,
       monthlyCount,
       freeLimit: FREE_MONTHLY_LIMIT,

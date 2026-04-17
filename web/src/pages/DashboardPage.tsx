@@ -7,14 +7,25 @@ import { CodeEditor } from '../components/CodeEditor';
 import { LanguageSelector } from '../components/LanguageSelector';
 import { TranslationHistory } from '../components/TranslationHistory';
 import { ToolsDropdown } from '../components/ToolsDropdown';
-import type { SupportedLanguage, Translation, TranslationResponse, TranslationHistoryResponse, TranslationStatsResponse } from '../types';
+import { useEditorPreferences } from '../hooks/useEditorPreferences';
+import type { SupportedLanguage, Translation, TranslationHistoryResponse, TranslationStatsResponse } from '../types';
+
+interface TranslationResponse {
+  translatedCode: string;
+  detectedLanguage?: string;
+  credits: number;
+  monthlyCount: number;
+  freeLimit: number;
+}
 
 export function DashboardPage() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { prefs } = useEditorPreferences();
+
   const [sourceCode, setSourceCode] = useState('');
   const [translatedCode, setTranslatedCode] = useState('');
-  const [sourceLanguage, setSourceLanguage] = useState<SupportedLanguage>('Python');
+  const [detectedLanguage, setDetectedLanguage] = useState<string | null>(null);
   const [targetLanguage, setTargetLanguage] = useState<SupportedLanguage>('JavaScript');
   const [translating, setTranslating] = useState(false);
   const [error, setError] = useState('');
@@ -24,50 +35,48 @@ export function DashboardPage() {
   const [history, setHistory] = useState<Translation[]>([]);
   const [showHistory, setShowHistory] = useState(false);
 
+  useEffect(() => {
+    loadHistory();
+    loadStats();
+  }, []);
+
   const loadStats = async () => {
     try {
       const data = await api<TranslationStatsResponse>('/translate/stats');
       setCredits(data.credits);
       setMonthlyCount(data.monthlyCount);
       setFreeLimit(data.freeLimit);
-    } catch {
-      // silently fail
-    }
+    } catch { /* silently fail */ }
   };
-
-  useEffect(() => {
-    loadHistory();
-    loadStats();
-  }, []);
 
   const loadHistory = async () => {
     try {
       const data = await api<TranslationHistoryResponse>('/translate/history?limit=20');
       setHistory(data.translations);
-    } catch {
-      // silently fail
-    }
+    } catch { /* silently fail */ }
   };
 
   const handleTranslate = async () => {
     if (!sourceCode.trim()) return;
     setError('');
+    setDetectedLanguage(null);
     setTranslating(true);
     setTranslatedCode('');
 
     try {
       const data = await api<TranslationResponse>('/translate', {
         method: 'POST',
-        body: { sourceCode, sourceLanguage, targetLanguage },
+        body: { sourceCode, sourceLanguage: 'auto', targetLanguage },
       });
       setTranslatedCode(data.translatedCode);
+      if (data.detectedLanguage) setDetectedLanguage(data.detectedLanguage);
       setCredits(data.credits);
       setMonthlyCount(data.monthlyCount);
       setFreeLimit(data.freeLimit);
       loadHistory();
     } catch (err: any) {
       if (err?.message?.includes('no_credits')) {
-        setError('You\'ve used all your free translations this month.');
+        setError("You've used all your free translations this month.");
       } else {
         setError(err instanceof Error ? err.message : 'Translation failed');
       }
@@ -79,22 +88,12 @@ export function DashboardPage() {
   const handleSelectHistory = (t: Translation) => {
     setSourceCode(t.sourceCode);
     setTranslatedCode(t.translatedCode);
-    setSourceLanguage(t.sourceLanguage as SupportedLanguage);
     setTargetLanguage(t.targetLanguage as SupportedLanguage);
     setShowHistory(false);
+    setDetectedLanguage(t.sourceLanguage);
   };
 
-  const handleSwapLanguages = () => {
-    setSourceLanguage(targetLanguage);
-    setTargetLanguage(sourceLanguage);
-    setSourceCode(translatedCode);
-    setTranslatedCode('');
-  };
-
-  const handleLogout = () => {
-    logout();
-    navigate('/');
-  };
+  const handleLogout = () => { logout(); navigate('/'); };
 
   const getUsageDisplay = () => {
     if (user?.plan === 'PRO') return { label: 'Unlimited', color: 'text-indigo-400' };
@@ -106,9 +105,13 @@ export function DashboardPage() {
   const usage = getUsageDisplay();
   const showOutOfCredits = error.includes('free translations') || error.includes('no_credits');
 
+  const editorStyle = {
+    fontFamily: `'${prefs.font}', monospace`,
+    fontSize: `${prefs.fontSize}px`,
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white">
-      {/* Header */}
       <nav className="border-b border-gray-800">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <Link to="/"><Logo /></Link>
@@ -132,19 +135,36 @@ export function DashboardPage() {
       </nav>
 
       <div className="max-w-7xl mx-auto px-4 py-6">
-        {/* Language selectors */}
-        <div className="flex items-end gap-4 mb-4">
-          <LanguageSelector label="From" value={sourceLanguage} onChange={setSourceLanguage} />
-          <button
-            onClick={handleSwapLanguages}
-            className="mb-0.5 p-2 text-gray-400 hover:text-white hover:bg-gray-800 rounded-lg transition-colors"
-            title="Swap languages"
-          >
+
+        {/* Language bar */}
+        <div className="flex items-center gap-4 mb-4">
+          {/* Source — auto detect */}
+          <div className="flex flex-col gap-1">
+            <span className="text-xs text-gray-500 font-medium uppercase tracking-wide">From</span>
+            <div className="flex items-center gap-2 h-10 px-3 bg-gray-900 border border-gray-700 rounded-lg text-sm">
+              <span className="text-gray-500">Auto Detect</span>
+              {detectedLanguage && (
+                <span className="flex items-center gap-1 text-indigo-400 font-medium">
+                  <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 inline-block" />
+                  {detectedLanguage}
+                </span>
+              )}
+              {!detectedLanguage && translating && (
+                <span className="text-gray-600 animate-pulse text-xs">detecting…</span>
+              )}
+            </div>
+          </div>
+
+          {/* Arrow */}
+          <div className="mt-5 text-gray-600">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M7 16V4m0 0L3 8m4-4l4 4m6 0v12m0 0l4-4m-4 4l-4-4" />
+              <path strokeLinecap="round" strokeLinejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-          </button>
+          </div>
+
+          {/* Target language */}
           <LanguageSelector label="To" value={targetLanguage} onChange={setTargetLanguage} />
+
           <div className="ml-auto flex gap-2">
             <button
               onClick={() => setShowHistory(!showHistory)}
@@ -154,10 +174,18 @@ export function DashboardPage() {
             </button>
             <button
               onClick={handleTranslate}
-              disabled={translating || !sourceCode.trim() || sourceLanguage === targetLanguage}
-              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors"
+              disabled={translating || !sourceCode.trim()}
+              className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg font-medium text-sm transition-colors flex items-center gap-2"
             >
-              {translating ? 'Translating...' : 'Translate'}
+              {translating ? (
+                <>
+                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  </svg>
+                  Translating…
+                </>
+              ) : 'Translate'}
             </button>
           </div>
         </div>
@@ -167,30 +195,30 @@ export function DashboardPage() {
             <span>{error}</span>
             {showOutOfCredits && (
               <div className="flex items-center gap-2 ml-4 shrink-0">
-                <Link to="/buy-credits" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1 rounded-lg transition">
-                  Buy Credits
-                </Link>
-                <Link to="/pricing" className="text-indigo-400 hover:text-indigo-300 text-xs underline">
-                  Go Pro
-                </Link>
+                <Link to="/buy-credits" className="bg-indigo-600 hover:bg-indigo-700 text-white text-xs px-3 py-1 rounded-lg transition">Buy Credits</Link>
+                <Link to="/pricing" className="text-indigo-400 hover:text-indigo-300 text-xs underline">Go Pro</Link>
               </div>
             )}
           </div>
         )}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <CodeEditor
-            value={sourceCode}
+          <div style={editorStyle}>
+            <CodeEditor
+              value={sourceCode}
             onChange={setSourceCode}
-            language={sourceLanguage}
-            placeholder="Paste your code here..."
-          />
-          <CodeEditor
-            value={translatedCode}
+            language="auto"
+            placeholder="Paste your code here — language is detected automatically"
+            />
+          </div>
+          <div style={editorStyle}>
+            <CodeEditor
+              value={translatedCode}
             readOnly
             language={targetLanguage}
-            placeholder="Translated code will appear here..."
-          />
+            placeholder="Translated code will appear here…"
+            />
+          </div>
         </div>
 
         {showHistory && (
