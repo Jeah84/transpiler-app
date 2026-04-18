@@ -13,7 +13,7 @@ router.get('/connect', requireAuth, (req, res) => {
     state: userId,
     redirect_uri: env.githubCallbackUrl,
   });
-  res.redirect(`https://github.com/login/oauth/authorize?${params}`);
+  res.json({ url: `https://github.com/login/oauth/authorize?${params}` });
 });
 
 router.get('/callback', async (req, res) => {
