@@ -1,7 +1,7 @@
 import { env } from '../config/env';
 
 const TOGETHER_API_URL = 'https://api.together.xyz/v1/chat/completions';
-const MODEL = 'meta-llama/Llama-3-70B-Instruct-Turbo';
+const MODEL = 'meta-llama/Llama-3.3-70B-Instruct-Turbo';
 
 export async function reviewCode(code: string, language: string): Promise<string> {
   const response = await fetch(TOGETHER_API_URL, {
