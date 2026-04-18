@@ -26,6 +26,7 @@ router.get('/callback', async (req, res) => {
       body: JSON.stringify({ client_id: env.githubClientId, client_secret: env.githubClientSecret, code }),
     });
     const tokenData = await tokenRes.json() as any;
+    console.log('[GitHub callback] tokenData:', JSON.stringify(tokenData));
     if (!tokenData.access_token) return res.redirect(`${env.frontendUrl}/settings?github=error`);
     const ghUser = await fetch('https://api.github.com/user', {
       headers: { Authorization: `Bearer ${tokenData.access_token}`, Accept: 'application/vnd.github.v3+json' },
