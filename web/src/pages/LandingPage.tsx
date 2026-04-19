@@ -1,60 +1,5 @@
 import { Link } from 'react-router-dom';
 
-// VS Code-style logo SVG component
-function TranspilerLogo({ size = 40 }: { size?: number }) {
-  return (
-    <svg
-      width={size}
-      height={size}
-      viewBox="0 0 40 40"
-      fill="none"
-      xmlns="http://www.w3.org/2000/svg"
-    >
-      {/* Editor window background */}
-      <rect width="40" height="40" rx="6" fill="#1E1E2E" />
-
-      {/* Title bar */}
-      <rect x="0" y="0" width="40" height="8" rx="6" fill="#2D2D3F" />
-      <rect x="0" y="4" width="40" height="4" fill="#2D2D3F" />
-
-      {/* Window control dots */}
-      <circle cx="6" cy="4" r="1.5" fill="#FF5F57" />
-      <circle cx="11" cy="4" r="1.5" fill="#FFBD2E" />
-      <circle cx="16" cy="4" r="1.5" fill="#28CA41" />
-
-      {/* Tab */}
-      <rect x="20" y="1" width="14" height="6" rx="2" fill="#1E1E2E" />
-      <text x="22" y="6" fill="#9CDCFE" fontSize="3.5" fontFamily="monospace">ts</text>
-
-      {/* Code lines */}
-      {/* Line 1: const keyword + variable */}
-      <rect x="3" y="12" width="5" height="1.8" rx="0.5" fill="#569CD6" />
-      <rect x="9" y="12" width="7" height="1.8" rx="0.5" fill="#9CDCFE" />
-      <rect x="17" y="12" width="2" height="1.8" rx="0.5" fill="#D4D4D4" />
-      <rect x="20" y="12" width="8" height="1.8" rx="0.5" fill="#CE9178" />
-
-      {/* Line 2: indented - function call */}
-      <rect x="5" y="16" width="8" height="1.8" rx="0.5" fill="#DCDCAA" />
-      <rect x="14" y="16" width="2" height="1.8" rx="0.5" fill="#D4D4D4" />
-      <rect x="17" y="16" width="6" height="1.8" rx="0.5" fill="#9CDCFE" />
-
-      {/* Line 3: arrow / operator */}
-      <rect x="5" y="20" width="3" height="1.8" rx="0.5" fill="#569CD6" />
-      <rect x="9" y="20" width="10" height="1.8" rx="0.5" fill="#4EC9B0" />
-      <rect x="20" y="20" width="5" height="1.8" rx="0.5" fill="#D4D4D4" />
-
-      {/* Line 4: return */}
-      <rect x="3" y="24" width="6" height="1.8" rx="0.5" fill="#C586C0" />
-      <rect x="10" y="24" width="9" height="1.8" rx="0.5" fill="#9CDCFE" />
-
-      {/* Status bar */}
-      <rect x="0" y="34" width="40" height="6" rx="0" fill="#007ACC" />
-      <rect x="0" y="34" width="40" height="6" fill="#007ACC" />
-      <rect x="0" y="38" width="40" height="2" rx="0" fill="#007ACC" />
-      <text x="3" y="38.5" fill="white" fontSize="3" fontFamily="monospace">TypeScript</text>
-    </svg>
-  );
-}
 
 export function LandingPage() {
   return (
@@ -62,8 +7,7 @@ export function LandingPage() {
       {/* Navigation */}
       <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
         <div className="flex items-center gap-3">
-          <TranspilerLogo size={36} />
-          <span className="text-xl font-bold text-white tracking-tight">Transpiler</span>
+          <img src="/transpiler-banner.png" className="h-9 object-contain" alt="Transpiler" />
         </div>
         <div className="flex items-center gap-4">
           <Link
@@ -318,8 +262,7 @@ export function LandingPage() {
       <footer className="border-t border-gray-800 mt-8 px-6 py-10">
         <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <TranspilerLogo size={24} />
-            <span className="text-gray-500 text-sm font-medium">Transpiler</span>
+            <img src="/transpiler-banner.png" className="h-6 object-contain opacity-60" alt="Transpiler" />
           </div>
           <div className="flex items-center gap-6 text-sm text-gray-500">
             <Link to="/pricing" className="hover:text-gray-300 transition-colors">Pricing</Link>
